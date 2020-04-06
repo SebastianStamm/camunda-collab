@@ -7,6 +7,7 @@ define([], function () {
 
   const ws = new WebSocket("ws://localhost:8101");
 
+  let sendEvents = true;
   ws.addEventListener("message", ({ data }) => {
     console.log("got something", data);
     const { a, d, u } = JSON.parse(data);
@@ -16,6 +17,11 @@ define([], function () {
         const cursor = createOrFindCursorFor(u);
         cursor.style.left = d[0] + "px";
         cursor.style.top = d[1] + "px";
+        break;
+      case "c":
+        sendEvents = false;
+        document.querySelector(d).click();
+        sendEvents = true;
         break;
     }
   });
@@ -42,6 +48,18 @@ define([], function () {
       }, 33),
       true
     );
+
+    document.body.addEventListener(
+      "click",
+      (evt) => {
+        if (sendEvents) {
+          ws.send(
+            JSON.stringify({ a: "c", d: getSelectorForElement(evt.target) })
+          );
+        }
+      },
+      true
+    );
   }
 });
 
@@ -65,4 +83,38 @@ function createOrFindCursorFor(user) {
 
   cursors[user] = newCursor;
   return newCursor;
+}
+
+function getSelectorForElement(elem) {
+  let path;
+  while (elem) {
+    let subSelector = elem.localName;
+    if (!subSelector) {
+      break;
+    }
+    subSelector = subSelector.toLowerCase();
+
+    const parent = elem.parentElement;
+
+    if (parent) {
+      const sameTagSiblings = parent.children;
+      if (sameTagSiblings.length > 1) {
+        let nameCount = 0;
+        const index =
+          [...sameTagSiblings].findIndex((child) => {
+            if (elem.localName === child.localName) {
+              nameCount++;
+            }
+            return child === elem;
+          }) + 1;
+        if (index > 1 && nameCount > 1) {
+          subSelector += ":nth-child(" + index + ")";
+        }
+      }
+    }
+
+    path = subSelector + (path ? ">" + path : "");
+    elem = parent;
+  }
+  return path;
 }
