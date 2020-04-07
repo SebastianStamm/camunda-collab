@@ -1,42 +1,53 @@
 var http = require("http"),
   httpProxy = require("http-proxy");
 const WebSocket = require("ws");
-//
-// Create your proxy server and set the target in the options.
-//
+const PassThrough = require("stream").PassThrough;
+
+const cacheTimeout = 3000;
+const cache = {};
+
 var proxy = httpProxy.createProxyServer({
   target: "http://localhost:8080",
   selfHandleResponse: true,
 });
 proxy.on("proxyRes", function (proxyRes, req, res) {
+  console.log(req.method, req.url);
+
+  cache[req.url] = cache[req.url] || {};
+  cache[req.url][req.method] = {
+    headers: proxyRes.headers,
+    content: null,
+  };
+
   for (key in proxyRes.headers) {
     res.setHeader(key, proxyRes.headers[key]);
   }
-  proxyRes.pipe(res);
-  // proxyRes.on("end", () => {
-  //   proxyRes.end();
-  //   console.log("end");
-  //   res.end();
-  // });
-  // let body = [];
-  // proxyRes.on("data", function (chunk) {
-  //   body.push(chunk);
-  // });
-  // proxyRes.on("end", function () {
-  //   body = Buffer.concat(body).toString();
-  //   // console.log("res from proxied server:", body);
-  //   res.end("my response to cli");
-  // });
-});
 
-const cacheTimeout = 3000;
-const cache = {};
+  proxyRes.pipe(res);
+
+  let body = [];
+  proxyRes.on("data", function (chunk) {
+    body.push(chunk);
+  });
+  proxyRes.on("end", function () {
+    cache[req.url][req.method].content = Buffer.concat(body).toString();
+  });
+});
 
 var server = http.createServer(function (req, res) {
   // console.log(req.method, req.url);
 
   // const deepResponse = new http.ServerResponse(req);
-  proxy.web(req, res);
+  // console.log(cache[req.url]);
+  if (cache[req.url] && cache[req.url][req.method]) {
+    console.log("got cached response");
+    for (key in cache[req.url][req.method].headers) {
+      res.setHeader(key, cache[req.url][req.method].headers[key]);
+    }
+    res.end(cache[req.url][req.method].content);
+  } else {
+    proxy.web(req, res);
+  }
 });
 
 server.listen(8100);
