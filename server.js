@@ -4,12 +4,39 @@ const WebSocket = require("ws");
 //
 // Create your proxy server and set the target in the options.
 //
-var proxy = httpProxy.createProxyServer({});
+var proxy = httpProxy.createProxyServer({
+  target: "http://localhost:8080",
+  selfHandleResponse: true,
+});
+proxy.on("proxyRes", function (proxyRes, req, res) {
+  for (key in proxyRes.headers) {
+    res.setHeader(key, proxyRes.headers[key]);
+  }
+  proxyRes.pipe(res);
+  // proxyRes.on("end", () => {
+  //   proxyRes.end();
+  //   console.log("end");
+  //   res.end();
+  // });
+  // let body = [];
+  // proxyRes.on("data", function (chunk) {
+  //   body.push(chunk);
+  // });
+  // proxyRes.on("end", function () {
+  //   body = Buffer.concat(body).toString();
+  //   // console.log("res from proxied server:", body);
+  //   res.end("my response to cli");
+  // });
+});
+
+const cacheTimeout = 3000;
+const cache = {};
 
 var server = http.createServer(function (req, res) {
-  // You can define here your custom logic to handle the request
-  // and then proxy the request.
-  proxy.web(req, res, { target: "http://localhost:8080" });
+  // console.log(req.method, req.url);
+
+  // const deepResponse = new http.ServerResponse(req);
+  proxy.web(req, res);
 });
 
 server.listen(8100);
