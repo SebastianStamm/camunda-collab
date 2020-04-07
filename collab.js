@@ -23,6 +23,13 @@ define([], function () {
         document.querySelector(d).click();
         sendEvents = true;
         break;
+      case "i":
+        sendEvents = false;
+        const element = document.querySelector(d.t);
+        element.value = d.v;
+        element.dispatchEvent(new Event("input"));
+        sendEvents = true;
+        break;
     }
   });
 
@@ -55,6 +62,21 @@ define([], function () {
         if (sendEvents) {
           ws.send(
             JSON.stringify({ a: "c", d: getSelectorForElement(evt.target) })
+          );
+        }
+      },
+      true
+    );
+
+    document.body.addEventListener(
+      "input",
+      (evt) => {
+        if (sendEvents) {
+          ws.send(
+            JSON.stringify({
+              a: "i",
+              d: { t: getSelectorForElement(evt.target), v: evt.target.value },
+            })
           );
         }
       },
