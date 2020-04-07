@@ -5,6 +5,8 @@ define([], function () {
 
   document.head.appendChild(lodash);
 
+  document.body.style.overflow = "hidden";
+
   const ws = new WebSocket("ws://localhost:8101");
 
   let sendEvents = true;
