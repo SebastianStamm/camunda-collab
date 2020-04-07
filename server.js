@@ -27,6 +27,8 @@ wss.on("connection", function connection(ws) {
     connections.forEach((connection) => {
       if (connection.ws === ws) {
         connections.splice(connections.indexOf(connection), 1);
+      } else {
+        connection.ws.send(JSON.stringify({ a: "d", u: id }));
       }
     });
   });

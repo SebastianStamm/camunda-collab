@@ -32,6 +32,10 @@ define([], function () {
         element.dispatchEvent(new Event("input"));
         sendEvents = true;
         break;
+      case "d":
+        const cursorToDelete = createOrFindCursorFor(u);
+        cursorToDelete.parentNode.removeChild(cursorToDelete);
+        break;
     }
   });
 
@@ -96,7 +100,7 @@ define([], function () {
 });
 
 const cursors = {};
-function createOrFindCursorFor(user, name) {
+function createOrFindCursorFor(user, name = "Anonymous") {
   if (cursors[user]) {
     cursors[user].querySelector("div").textContent = name;
     return cursors[user];
