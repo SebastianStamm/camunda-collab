@@ -12,11 +12,11 @@ define([], function () {
   let sendEvents = true;
   ws.addEventListener("message", ({ data }) => {
     console.log("got something", data);
-    const { a, d, u } = JSON.parse(data);
+    const { a, d, u, n } = JSON.parse(data);
 
     switch (a) {
       case "m":
-        const cursor = createOrFindCursorFor(u);
+        const cursor = createOrFindCursorFor(u, n);
         cursor.style.left = d[0] + "px";
         cursor.style.top = d[1] + "px";
         break;
@@ -36,6 +36,14 @@ define([], function () {
   });
 
   ws.addEventListener("open", () => {
+    const randomName = getRandomName();
+    const name =
+      prompt(
+        "This is a Camunda Installation with Collaboration features! Please enter your name:"
+      ) || randomName;
+
+    ws.send(JSON.stringify({ a: "n", d: name }));
+
     const int = setInterval(() => {
       if (typeof _ !== "undefined") {
         clearInterval(int);
@@ -88,8 +96,9 @@ define([], function () {
 });
 
 const cursors = {};
-function createOrFindCursorFor(user) {
+function createOrFindCursorFor(user, name) {
   if (cursors[user]) {
+    cursors[user].querySelector("div").textContent = name;
     return cursors[user];
   }
 
@@ -99,8 +108,8 @@ function createOrFindCursorFor(user) {
   newCursor.style.pointerEvents = "none";
 
   newCursor.innerHTML =
-    '<div style="background-color: rgba(200,200,255,.6); padding: 2px 8px; font-size: 11px; position: absolute; top: 10px; left: 5px; color: #333;">' +
-    user +
+    '<div style="background-color: rgba(200,200,255,.6); padding: 2px 8px; font-size: 11px; position: absolute; top: 10px; left: 5px; color: #333; white-space: nowrap;">' +
+    name +
     '</div><img style="position:absolute;" src="/camunda/app/cockpit/scripts/cursor.png" />';
 
   document.body.appendChild(newCursor);
@@ -141,4 +150,8 @@ function getSelectorForElement(elem) {
     elem = parent;
   }
   return path;
+}
+
+function getRandomName() {
+  return "Anonymous";
 }

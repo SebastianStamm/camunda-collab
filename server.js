@@ -20,6 +20,7 @@ const connections = [];
 
 wss.on("connection", function connection(ws) {
   const id = Math.random().toString(32).substr(2);
+  let name = "--unknown--";
   connections.push({ ws });
 
   ws.on("close", function close() {
@@ -32,7 +33,11 @@ wss.on("connection", function connection(ws) {
 
   ws.on("message", function incoming(message) {
     const outgoing = JSON.parse(message);
+    if (outgoing.a === "n") {
+      name = outgoing.d;
+    }
     outgoing.u = id;
+    outgoing.n = name;
     connections.forEach((connection) => {
       if (connection.ws !== ws) {
         connection.ws.send(JSON.stringify(outgoing));
