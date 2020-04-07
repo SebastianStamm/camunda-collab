@@ -12,30 +12,88 @@ define([], function () {
   let sendEvents = true;
   ws.addEventListener("message", ({ data }) => {
     console.log("got something", data);
-    const { a, d, u, n } = JSON.parse(data);
+    const { a, d, u, n, t, e } = JSON.parse(data);
 
     switch (a) {
-      case "m":
+      case "m": {
         const cursor = createOrFindCursorFor(u, n);
         cursor.style.left = d[0] + "px";
         cursor.style.top = d[1] + "px";
-        break;
-      case "c":
+
         sendEvents = false;
-        document.querySelector(d).click();
+        const element = document.querySelector(t);
+        if (element) {
+          console.log({
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            ...e,
+          });
+          element.dispatchEvent(
+            new MouseEvent("mousemove", {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+              ...e,
+            })
+          );
+        }
         sendEvents = true;
         break;
-      case "i":
+      }
+      case "c": {
+        sendEvents = false;
+        document.querySelector(d)?.click?.();
+        sendEvents = true;
+        break;
+      }
+      case "i": {
         sendEvents = false;
         const element = document.querySelector(d.t);
-        element.value = d.v;
-        element.dispatchEvent(new Event("input"));
+        if (element) {
+          element.value = d.v;
+          element.dispatchEvent(new Event("input"));
+        }
         sendEvents = true;
         break;
-      case "d":
+      }
+      case "md": {
+        sendEvents = false;
+        const element = document.querySelector(d);
+        if (element) {
+          element.dispatchEvent(
+            new MouseEvent("mousedown", {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+              ...e,
+            })
+          );
+        }
+        sendEvents = true;
+        break;
+      }
+      case "mu": {
+        sendEvents = false;
+        const element = document.querySelector(d);
+        if (element) {
+          element.dispatchEvent(
+            new MouseEvent("mouseup", {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+              ...e,
+            })
+          );
+        }
+        sendEvents = true;
+        break;
+      }
+      case "d": {
         const cursorToDelete = createOrFindCursorFor(u);
         cursorToDelete.parentNode.removeChild(cursorToDelete);
         break;
+      }
     }
   });
 
@@ -57,16 +115,37 @@ define([], function () {
   });
 
   function setup() {
+    const sendMouseMove = _.throttle((evt) => {
+      ws.send(
+        JSON.stringify({
+          a: "m",
+          d: [evt.pageX, evt.pageY],
+          t: getSelectorForElement(evt.target),
+          e: {
+            clientX: evt.clientX,
+            clientY: evt.clientY,
+            offsetX: evt.offsetX,
+            offsetY: evt.offsetY,
+          },
+        })
+      );
+    }, 33);
+
     document.body.addEventListener(
       "mousemove",
-      _.throttle(({ pageX, pageY }) => {
-        ws.send(
-          JSON.stringify({
-            a: "m",
-            d: [pageX, pageY],
-          })
-        );
-      }, 33),
+      ({ pageX, pageY, target, clientX, clientY, offsetX, offsetY }) => {
+        if (sendEvents) {
+          sendMouseMove({
+            pageX,
+            pageY,
+            target,
+            clientX,
+            clientY,
+            offsetX,
+            offsetY,
+          });
+        }
+      },
       true
     );
 
@@ -76,6 +155,48 @@ define([], function () {
         if (sendEvents) {
           ws.send(
             JSON.stringify({ a: "c", d: getSelectorForElement(evt.target) })
+          );
+        }
+      },
+      true
+    );
+
+    document.body.addEventListener(
+      "mousedown",
+      (evt) => {
+        if (sendEvents) {
+          ws.send(
+            JSON.stringify({
+              a: "md",
+              d: getSelectorForElement(evt.target),
+              e: {
+                clientX: evt.clientX,
+                clientY: evt.clientY,
+                offsetX: evt.offsetX,
+                offsetY: evt.offsetY,
+              },
+            })
+          );
+        }
+      },
+      true
+    );
+
+    document.body.addEventListener(
+      "mouseup",
+      (evt) => {
+        if (sendEvents) {
+          ws.send(
+            JSON.stringify({
+              a: "mu",
+              d: getSelectorForElement(evt.target),
+              e: {
+                clientX: evt.clientX,
+                clientY: evt.clientY,
+                offsetX: evt.offsetX,
+                offsetY: evt.offsetY,
+              },
+            })
           );
         }
       },
