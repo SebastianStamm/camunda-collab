@@ -11,7 +11,6 @@ define([], function () {
 
   let sendEvents = true;
   ws.addEventListener("message", ({ data }) => {
-    console.log("got something", data);
     const { a, d, u, n, t, e } = JSON.parse(data);
 
     switch (a) {
@@ -23,12 +22,6 @@ define([], function () {
         sendEvents = false;
         const element = document.querySelector(t);
         if (element) {
-          console.log({
-            bubbles: true,
-            cancelable: true,
-            view: window,
-            ...e,
-          });
           element.dispatchEvent(
             new MouseEvent("mousemove", {
               bubbles: true,

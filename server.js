@@ -48,6 +48,5 @@ wss.on("connection", function connection(ws) {
         connection.ws.send(JSON.stringify(outgoing));
       }
     });
-    console.log("received: %s", message);
   });
 });
