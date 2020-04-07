@@ -3,7 +3,7 @@ var http = require("http"),
 const WebSocket = require("ws");
 const PassThrough = require("stream").PassThrough;
 
-const cacheTimeout = 3000;
+const cacheTimeout = 2000;
 const cache = {};
 
 var proxy = httpProxy.createProxyServer({
@@ -32,6 +32,10 @@ proxy.on("proxyRes", function (proxyRes, req, res) {
   proxyRes.on("end", function () {
     cache[req.url][req.method].content = Buffer.concat(body).toString();
   });
+
+  setTimeout(() => {
+    cache[req.url][req.method] = null;
+  }, cacheTimeout);
 });
 
 var server = http.createServer(function (req, res) {
