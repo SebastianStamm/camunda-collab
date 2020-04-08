@@ -10,13 +10,13 @@ var proxy = httpProxy.createProxyServer({
   selfHandleResponse: true,
 });
 proxy.on("proxyRes", function (proxyRes, req, res) {
-  console.log(req.method, req.url);
+  // console.log(req.method, req.url);
 
-  cache[req.url] = cache[req.url] || {};
-  cache[req.url][req.method] = {
-    headers: proxyRes.headers,
-    content: null,
-  };
+  // cache[req.url] = cache[req.url] || {};
+  // cache[req.url][req.method] = {
+  //   headers: proxyRes.headers,
+  //   content: null,
+  // };
 
   for (key in proxyRes.headers) {
     res.setHeader(key, proxyRes.headers[key]);
@@ -24,45 +24,46 @@ proxy.on("proxyRes", function (proxyRes, req, res) {
 
   proxyRes.pipe(res);
 
-  let body = [];
-  proxyRes.on("data", function (chunk) {
-    body.push(chunk);
-  });
-  proxyRes.on("end", function () {
-    cache[req.url][req.method].content = Buffer.concat(body).toString();
-  });
+  // let body = [];
+  // proxyRes.on("data", function (chunk) {
+  //   body.push(chunk);
+  // });
+  // proxyRes.on("end", function () {
+  //   cache[req.url][req.method].content = Buffer.concat(body).toString();
+  // });
 
-  setTimeout(() => {
-    cache[req.url][req.method] = null;
-  }, cacheTimeout);
+  // setTimeout(() => {
+  //   cache[req.url][req.method] = null;
+  // }, cacheTimeout);
 });
 
 var server = http.createServer(function (req, res) {
-  if (cache[req.url] && cache[req.url][req.method]) {
-    if (cache[req.url][req.method] === true) {
-      const interval = setInterval(() => {
-        if (typeof cache[req.url][req.method] === "object") {
-          clearInterval(interval);
-          for (key in cache[req.url][req.method].headers) {
-            res.setHeader(key, cache[req.url][req.method].headers[key]);
-          }
-          res.end(cache[req.url][req.method].content);
-        }
-      }, 20);
-    } else {
-      console.log("got cached response");
-      for (key in cache[req.url][req.method].headers) {
-        res.setHeader(key, cache[req.url][req.method].headers[key]);
-      }
-      res.end(cache[req.url][req.method].content);
-    }
-  } else {
-    if (!cache[req.url]) {
-      cache[req.url] = {};
-    }
-    cache[req.url][req.method] = true;
-    proxy.web(req, res);
-  }
+  // if (cache[req.url] && cache[req.url][req.method]) {
+  //   if (cache[req.url][req.method] === true && false) {
+  //     const interval = setInterval(() => {
+  //       if (typeof cache[req.url][req.method] === "object") {
+  //         clearInterval(interval);
+  //         for (key in cache[req.url][req.method].headers) {
+  //           res.setHeader(key, cache[req.url][req.method].headers[key]);
+  //         }
+  //         res.end(cache[req.url][req.method].content);
+  //       }
+  //     }, 20);
+  //   } else {
+  //     console.log("got cached response");
+  //     for (key in cache[req.url][req.method].headers) {
+  //       console.log("setting response header", key);
+  //       res.setHeader(key, cache[req.url][req.method].headers[key]);
+  //     }
+  //     res.end(cache[req.url][req.method].content);
+  //   }
+  // } else {
+  //   if (!cache[req.url]) {
+  //     cache[req.url] = {};
+  //   }
+  //   cache[req.url][req.method] = true;
+  proxy.web(req, res);
+  // }
 });
 
 server.listen(8100);
