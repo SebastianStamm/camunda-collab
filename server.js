@@ -1,7 +1,6 @@
 var http = require("http"),
   httpProxy = require("http-proxy");
 const WebSocket = require("ws");
-const PassThrough = require("stream").PassThrough;
 
 const cacheTimeout = 2000;
 const cache = {};
@@ -39,17 +38,29 @@ proxy.on("proxyRes", function (proxyRes, req, res) {
 });
 
 var server = http.createServer(function (req, res) {
-  // console.log(req.method, req.url);
-
-  // const deepResponse = new http.ServerResponse(req);
-  // console.log(cache[req.url]);
   if (cache[req.url] && cache[req.url][req.method]) {
-    console.log("got cached response");
-    for (key in cache[req.url][req.method].headers) {
-      res.setHeader(key, cache[req.url][req.method].headers[key]);
+    if (cache[req.url][req.method] === true) {
+      const interval = setInterval(() => {
+        if (typeof cache[req.url][req.method] === "object") {
+          clearInterval(interval);
+          for (key in cache[req.url][req.method].headers) {
+            res.setHeader(key, cache[req.url][req.method].headers[key]);
+          }
+          res.end(cache[req.url][req.method].content);
+        }
+      }, 20);
+    } else {
+      console.log("got cached response");
+      for (key in cache[req.url][req.method].headers) {
+        res.setHeader(key, cache[req.url][req.method].headers[key]);
+      }
+      res.end(cache[req.url][req.method].content);
     }
-    res.end(cache[req.url][req.method].content);
   } else {
+    if (!cache[req.url]) {
+      cache[req.url] = {};
+    }
+    cache[req.url][req.method] = true;
     proxy.web(req, res);
   }
 });
