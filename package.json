@@ -1,0 +1,21 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "camunda-cockpit-ui.js",
+  "dependencies": {
+    "http-proxy": "^1.18.0",
+    "ws": "^7.2.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com-work:SebastianStamm/camunda-collab.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
