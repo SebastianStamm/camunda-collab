@@ -19,6 +19,8 @@ proxy.on("proxyRes", function (proxyRes, req, res) {
     res.setHeader(key, proxyRes.headers[key]);
   }
 
+  res.statusCode = proxyRes.statusCode;
+
   // console.log("returning response");
   proxyRes.pipe(res);
 
