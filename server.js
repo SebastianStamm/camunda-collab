@@ -5,10 +5,7 @@ const WebSocket = require("ws");
 const cacheTimeout = 2000;
 const cache = {};
 
-var proxy = httpProxy.createProxyServer({
-  target: "http://localhost:8080",
-  selfHandleResponse: true,
-});
+var proxy = httpProxy.createProxyServer({});
 proxy.on("proxyRes", function (proxyRes, req, res) {
   // console.log(req.method, req.url);
 
@@ -22,6 +19,7 @@ proxy.on("proxyRes", function (proxyRes, req, res) {
     res.setHeader(key, proxyRes.headers[key]);
   }
 
+  // console.log("returning response");
   proxyRes.pipe(res);
 
   // let body = [];
@@ -29,7 +27,8 @@ proxy.on("proxyRes", function (proxyRes, req, res) {
   //   body.push(chunk);
   // });
   // proxyRes.on("end", function () {
-  //   cache[req.url][req.method].content = Buffer.concat(body).toString();
+  //   console.log(Buffer.concat(body).toString());
+  //   // cache[req.url][req.method].content = Buffer.concat(body).toString();
   // });
 
   // setTimeout(() => {
@@ -62,11 +61,18 @@ var server = http.createServer(function (req, res) {
   //     cache[req.url] = {};
   //   }
   //   cache[req.url][req.method] = true;
-  proxy.web(req, res);
+  proxy.web(req, res, {
+    target: "http://localhost:8080",
+    selfHandleResponse: true,
+  });
   // }
 });
 
-server.listen(8100);
+server.on("upgrade", function (req, socket, head) {
+  proxy.ws(req, socket, head, { target: "ws://localhost:8101" });
+});
+
+server.listen(80);
 
 const wss = new WebSocket.Server({ port: 8101 });
 

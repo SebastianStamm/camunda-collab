@@ -7,7 +7,7 @@ define([], function () {
 
   document.body.style.overflow = "hidden";
 
-  const ws = new WebSocket("ws://localhost:8101");
+  const ws = new WebSocket("ws://localhost");
 
   let sendEvents = true;
   ws.addEventListener("message", ({ data }) => {
