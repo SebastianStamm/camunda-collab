@@ -87,6 +87,10 @@ define([], function () {
         cursorToDelete.parentNode.removeChild(cursorToDelete);
         break;
       }
+      case "r": {
+        document.body.removeChild(document.querySelector("#screenBlock"));
+        break;
+      }
     }
   });
 
@@ -106,6 +110,8 @@ define([], function () {
       }
     }, 200);
   });
+
+  let cursorVisible = !localStorage.getItem("hideCursorsInitially");
 
   function setup() {
     const sendMouseMove = _.throttle((evt) => {
@@ -210,109 +216,126 @@ define([], function () {
       },
       true
     );
+
+    let showCursorsStage = 0;
+    document.body.addEventListener(
+      "keydown",
+      ({ key }) => {
+        if (key === "F7") {
+          localStorage.removeItem("hideCursorsInitially");
+          cursorVisible = true;
+          if (showCursorsStage === 0) {
+            document.querySelectorAll(".hack-cursor").forEach((element) => {
+              if (element.textContent.toLowerCase().startsWith("k")) {
+                element.style.display = "block";
+              }
+            });
+            showCursorsStage++;
+          } else if (showCursorsStage === 2) {
+            document.querySelectorAll(".hack-cursor").forEach((element) => {
+              if (element.textContent.toLowerCase().startsWith("m")) {
+                element.style.display = "block";
+              }
+            });
+            showCursorsStage++;
+          } else if (showCursorsStage === 1) {
+            document.querySelectorAll(".hack-cursor").forEach((element) => {
+              if (element.textContent.toLowerCase().startsWith("p")) {
+                element.style.display = "block";
+              }
+            });
+            showCursorsStage++;
+          } else {
+            document.querySelectorAll(".hack-cursor").forEach((element) => {
+              element.style.display = "block";
+            });
+          }
+        }
+        if (key === "F8") {
+          ws.send(JSON.stringify({ a: "r" }));
+          document.body.removeChild(document.querySelector("#screenBlock"));
+        }
+        if (key === "F9") {
+          localStorage.setItem("hideCursorsInitially", "1");
+        }
+      },
+      true
+    );
   }
-});
 
-let cursorVisible = !localStorage.getItem("hideCursorsInitially");
-
-let showCursorsStage = 0;
-document.body.addEventListener("keydown", ({ key }) => {
-  if (key === "F7") {
-    localStorage.removeItem("hideCursorsInitially");
-    cursorVisible = true;
-    if (showCursorsStage === 0) {
-      document.querySelectorAll(".hack-cursor").forEach((element) => {
-        if (element.textContent.toLowerCase().startsWith("k")) {
-          element.style.display = "block";
-        }
-      });
-      showCursorsStage++;
-    } else if (showCursorsStage === 2) {
-      document.querySelectorAll(".hack-cursor").forEach((element) => {
-        if (element.textContent.toLowerCase().startsWith("m")) {
-          element.style.display = "block";
-        }
-      });
-      showCursorsStage++;
-    } else if (showCursorsStage === 1) {
-      document.querySelectorAll(".hack-cursor").forEach((element) => {
-        if (element.textContent.toLowerCase().startsWith("p")) {
-          element.style.display = "block";
-        }
-      });
-      showCursorsStage++;
-    } else {
-      document.querySelectorAll(".hack-cursor").forEach((element) => {
-        element.style.display = "block";
-      });
+  const cursors = {};
+  function createOrFindCursorFor(user, name = "Anonymous") {
+    if (cursors[user]) {
+      cursors[user].querySelector("div").textContent = name;
+      return cursors[user];
     }
-  }
-  if (key === "F9") {
-    localStorage.setItem("hideCursorsInitially", "1");
-  }
-});
 
-const cursors = {};
-function createOrFindCursorFor(user, name = "Anonymous") {
-  if (cursors[user]) {
-    cursors[user].querySelector("div").textContent = name;
-    return cursors[user];
-  }
-
-  const newCursor = document.createElement("div");
-  newCursor.style.position = "absolute";
-  newCursor.style.zIndex = "9999999";
-  newCursor.style.pointerEvents = "none";
-  newCursor.classList.add("hack-cursor");
-  if (!cursorVisible) {
-    newCursor.style.display = "none";
-  }
-
-  newCursor.innerHTML =
-    '<div style="background-color: rgba(200,200,255,.6); padding: 2px 8px; font-size: 11px; position: absolute; top: 10px; left: 5px; color: #333; white-space: nowrap;">' +
-    name +
-    '</div><img style="position:absolute;" src="/camunda/app/cockpit/scripts/cursor.png" />';
-
-  document.body.appendChild(newCursor);
-
-  cursors[user] = newCursor;
-  return newCursor;
-}
-
-function getSelectorForElement(elem) {
-  let path;
-  while (elem) {
-    let subSelector = elem.localName;
-    if (!subSelector) {
-      break;
+    const newCursor = document.createElement("div");
+    newCursor.style.position = "absolute";
+    newCursor.style.zIndex = "9999999";
+    newCursor.style.pointerEvents = "none";
+    newCursor.classList.add("hack-cursor");
+    if (!cursorVisible) {
+      newCursor.style.display = "none";
     }
-    subSelector = subSelector.toLowerCase();
 
-    const parent = elem.parentElement;
+    newCursor.innerHTML =
+      '<div style="background-color: rgba(200,200,255,.6); padding: 2px 8px; font-size: 11px; position: absolute; top: 10px; left: 5px; color: #333; white-space: nowrap;">' +
+      name +
+      '</div><img style="position:absolute;" src="/camunda/app/cockpit/scripts/cursor.png" />';
 
-    if (parent) {
-      const sameTagSiblings = parent.children;
-      if (sameTagSiblings.length > 1) {
-        let nameCount = 0;
-        const index =
-          [...sameTagSiblings].findIndex((child) => {
-            if (elem.localName === child.localName) {
-              nameCount++;
-            }
-            return child === elem;
-          }) + 1;
-        if (index > 1 && nameCount > 1) {
-          subSelector += ":nth-child(" + index + ")";
+    document.body.appendChild(newCursor);
+
+    cursors[user] = newCursor;
+    return newCursor;
+  }
+
+  function getSelectorForElement(elem) {
+    let path;
+    while (elem) {
+      let subSelector = elem.localName;
+      if (!subSelector) {
+        break;
+      }
+      subSelector = subSelector.toLowerCase();
+
+      const parent = elem.parentElement;
+
+      if (parent) {
+        const sameTagSiblings = parent.children;
+        if (sameTagSiblings.length > 1) {
+          let nameCount = 0;
+          const index =
+            [...sameTagSiblings].findIndex((child) => {
+              if (elem.localName === child.localName) {
+                nameCount++;
+              }
+              return child === elem;
+            }) + 1;
+          if (index > 1 && nameCount > 1) {
+            subSelector += ":nth-child(" + index + ")";
+          }
         }
       }
+
+      path = subSelector + (path ? ">" + path : "");
+      elem = parent;
     }
-
-    path = subSelector + (path ? ">" + path : "");
-    elem = parent;
+    return path;
   }
-  return path;
-}
 
-function getRandomName() {
-  return "Anonymous";
-}
+  function getRandomName() {
+    return "Anonymous";
+  }
+});
+
+const screen = document.createElement("div");
+screen.setAttribute("id", "screenBlock");
+screen.style.position = "absolute";
+screen.style.zIndex = "9999998";
+screen.style.top = "0";
+screen.style.left = "0";
+screen.style.bottom = "0";
+screen.style.right = "0";
+
+document.body.appendChild(screen);
