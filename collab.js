@@ -213,6 +213,45 @@ define([], function () {
   }
 });
 
+let cursorVisible = !localStorage.getItem("hideCursorsInitially");
+
+let showCursorsStage = 0;
+document.body.addEventListener("keydown", ({ key }) => {
+  if (key === "F7") {
+    localStorage.removeItem("hideCursorsInitially");
+    cursorVisible = true;
+    if (showCursorsStage === 0) {
+      document.querySelectorAll(".hack-cursor").forEach((element) => {
+        if (element.textContent.toLowerCase().startsWith("k")) {
+          element.style.display = "block";
+        }
+      });
+      showCursorsStage++;
+    } else if (showCursorsStage === 2) {
+      document.querySelectorAll(".hack-cursor").forEach((element) => {
+        if (element.textContent.toLowerCase().startsWith("m")) {
+          element.style.display = "block";
+        }
+      });
+      showCursorsStage++;
+    } else if (showCursorsStage === 1) {
+      document.querySelectorAll(".hack-cursor").forEach((element) => {
+        if (element.textContent.toLowerCase().startsWith("p")) {
+          element.style.display = "block";
+        }
+      });
+      showCursorsStage++;
+    } else {
+      document.querySelectorAll(".hack-cursor").forEach((element) => {
+        element.style.display = "block";
+      });
+    }
+  }
+  if (key === "F9") {
+    localStorage.setItem("hideCursorsInitially", "1");
+  }
+});
+
 const cursors = {};
 function createOrFindCursorFor(user, name = "Anonymous") {
   if (cursors[user]) {
@@ -224,6 +263,10 @@ function createOrFindCursorFor(user, name = "Anonymous") {
   newCursor.style.position = "absolute";
   newCursor.style.zIndex = "9999999";
   newCursor.style.pointerEvents = "none";
+  newCursor.classList.add("hack-cursor");
+  if (!cursorVisible) {
+    newCursor.style.display = "none";
+  }
 
   newCursor.innerHTML =
     '<div style="background-color: rgba(200,200,255,.6); padding: 2px 8px; font-size: 11px; position: absolute; top: 10px; left: 5px; color: #333; white-space: nowrap;">' +
