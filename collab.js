@@ -110,7 +110,7 @@ ws.addEventListener("open", () => {
   }, 200);
 });
 
-let cursorVisible = !localStorage.getItem("hideCursorsInitially");
+let cursorVisible = !localStorage.getItem("isPresenter");
 
 function setup() {
   const sendMouseMove = _.throttle((evt) => {
@@ -216,46 +216,18 @@ function setup() {
     true
   );
 
-  let showCursorsStage = 0;
   document.body.addEventListener(
     "keydown",
     ({ key }) => {
       if (key === "F7") {
-        localStorage.removeItem("hideCursorsInitially");
         cursorVisible = true;
-        if (showCursorsStage === 0) {
-          document.querySelectorAll(".hack-cursor").forEach((element) => {
-            if (element.textContent.toLowerCase().startsWith("k")) {
-              element.style.display = "block";
-            }
-          });
-          showCursorsStage++;
-        } else if (showCursorsStage === 2) {
-          document.querySelectorAll(".hack-cursor").forEach((element) => {
-            if (element.textContent.toLowerCase().startsWith("m")) {
-              element.style.display = "block";
-            }
-          });
-          showCursorsStage++;
-        } else if (showCursorsStage === 1) {
-          document.querySelectorAll(".hack-cursor").forEach((element) => {
-            if (element.textContent.toLowerCase().startsWith("p")) {
-              element.style.display = "block";
-            }
-          });
-          showCursorsStage++;
-        } else {
-          document.querySelectorAll(".hack-cursor").forEach((element) => {
-            element.style.display = "block";
-          });
-        }
+        document.querySelectorAll(".hack-cursor").forEach((element) => {
+          element.style.display = "block";
+        });
       }
       if (key === "F8") {
+        // remove screenblocker and start chaos
         ws.send(JSON.stringify({ a: "r" }));
-        document.body.removeChild(document.querySelector("#screenBlock"));
-      }
-      if (key === "F9") {
-        localStorage.setItem("hideCursorsInitially", "1");
       }
     },
     true
@@ -327,13 +299,15 @@ function getRandomName() {
   return "Anonymous";
 }
 
-const screen = document.createElement("div");
-screen.setAttribute("id", "screenBlock");
-screen.style.position = "absolute";
-screen.style.zIndex = "9999998";
-screen.style.top = "0";
-screen.style.left = "0";
-screen.style.bottom = "0";
-screen.style.right = "0";
+if (!localStorage.getItem("isPresenter")) {
+  const screen = document.createElement("div");
+  screen.setAttribute("id", "screenBlock");
+  screen.style.position = "absolute";
+  screen.style.zIndex = "9999998";
+  screen.style.top = "0";
+  screen.style.left = "0";
+  screen.style.bottom = "0";
+  screen.style.right = "0";
 
-document.body.appendChild(screen);
+  document.body.appendChild(screen);
+}
