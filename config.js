@@ -15,20 +15,11 @@
  * limitations under the License.
  */
 
-window.camCockpitConf = {
+export default {
   // // custom libraries and scripts loading and initialization,
   // // see: http://docs.camunda.org/guides/user-guide/#tasklist-customizing-custom-scripts
   // …
-  customScripts: {
-    ngDeps: [],
-
-    deps: ["collab"],
-
-    // RequreJS path definitions
-    paths: {
-      collab: "scripts/collab",
-    },
-  },
+  customScripts: ["scripts/collab.js"],
   // …
   // historicActivityInstanceMetrics: {
   //   adjustablePeriod: true,
