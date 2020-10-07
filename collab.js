@@ -87,6 +87,14 @@ ws.addEventListener("message", ({ data }) => {
       break;
     }
     case "r": {
+      document.body.removeEventListener("click", blocker, true);
+      document.body.removeEventListener("mousedown", blocker, true);
+      document.body.removeEventListener("keydown", blocker, true);
+      document.body.removeEventListener("mouseup", blocker, true);
+      document.body.removeEventListener("input", blocker, true);
+      sendEvents = false;
+      document.querySelector(".form-signin button").click();
+      sendEvents = true;
       document.body.removeChild(document.querySelector("#screenBlock"));
       break;
     }
@@ -216,22 +224,28 @@ function setup() {
     true
   );
 
-  document.body.addEventListener(
-    "keydown",
-    ({ key }) => {
-      if (key === "F7") {
-        cursorVisible = true;
-        document.querySelectorAll(".hack-cursor").forEach((element) => {
-          element.style.display = "block";
-        });
-      }
-      if (key === "F8") {
-        // remove screenblocker and start chaos
-        ws.send(JSON.stringify({ a: "r" }));
-      }
-    },
-    true
-  );
+  if (localStorage.getItem("isPresenter")) {
+    document.body.classList.add("presenter");
+    document.body.addEventListener(
+      "keydown",
+      ({ key }) => {
+        if (key === "F7") {
+          cursorVisible = true;
+          document.querySelectorAll(".hack-cursor").forEach((element) => {
+            element.style.display = "block";
+          });
+        }
+        if (key === "F8") {
+          // remove screenblocker and start chaos
+          ws.send(JSON.stringify({ a: "r" }));
+          sendEvents = false;
+          document.querySelector(".form-signin button").click();
+          sendEvents = true;
+        }
+      },
+      true
+    );
+  }
 }
 
 const cursors = {};
@@ -299,7 +313,19 @@ function getRandomName() {
   return "Anonymous";
 }
 
+const blocker = function (evt) {
+  evt.stopPropagation();
+  evt.stopImmediatePropagation();
+  evt.preventDefault();
+};
+
 if (!localStorage.getItem("isPresenter")) {
+  document.body.addEventListener("click", blocker, true);
+  document.body.addEventListener("mousedown", blocker, true);
+  document.body.addEventListener("mouseup", blocker, true);
+  document.body.addEventListener("keydown", blocker, true);
+  document.body.addEventListener("input", blocker, true);
+
   const screen = document.createElement("div");
   screen.setAttribute("id", "screenBlock");
   screen.style.position = "absolute";
